@@ -1,0 +1,72 @@
+races:
+  # Edition 2025 (donnees figees) : sert de banc de test de la chaine complete
+  # avant la 2026. Structure du viewer confirmee par probe.py :
+  # sig.boats porte les 14 traces, la classe vit dans
+  # tracker._boatClassesByBoatIds (le champ boat.category vaut "race" partout).
+  # Depart officiel le 27/09/2025 10:00 UTC, ~30 h de trace.
+  - race_id: 24hultim2025
+    name: "24H Ultim Banque Populaire Grand Ouest - 4e edition"
+    venue: "Lorient La Base"
+    classes: [ULTIM, OCEAN_FIFTY]
+    viewer_url: "https://24hultim.geovoile.com/2025/viewer/"
+    fallback_urls:
+      - "https://24hultim.geovoile.com/2025/tracker/"
+    window_start_utc: "2025-09-27T06:00:00Z"
+    window_end_utc: "2025-09-28T18:00:00Z"
+    weather_primary_model: "meteofrance_arome_france_hd"
+    weather_reference_model: "era5"
+
+  - race_id: 24hultim2026
+    name: "24H Ultim Banque Populaire Grand Ouest - 5e edition"
+    venue: "Lorient La Base"
+    classes: [ULTIM, OCEAN_FIFTY]
+    # A verifier la veille : Geovoile reconduit le pattern /<annee>/viewer/
+    # 2023 -> /2023/tracker/ ; 2024 et 2025 -> /<annee>/viewer/
+    viewer_url: "https://24hultim.geovoile.com/2026/viewer/"
+    fallback_urls:
+      - "https://24hultim.geovoile.com/2026/tracker/"
+    # Fenetre de collecte large (UTC). L'evenement court du 23 au 27/09/2026.
+    # Le depart des 24H est a caler des que l'avis de course est publie.
+    window_start_utc: "2026-09-23T06:00:00Z"
+    window_end_utc: "2026-09-27T22:00:00Z"
+    # Modele meteo pour l'enrichissement immediat (haute resolution cotiere)
+    weather_primary_model: "meteofrance_arome_france_hd"
+    weather_reference_model: "era5"
+
+# Correspondance nom affiche par le viewer -> hull_id stable.
+#
+# NE PAS remplir depuis la liste des engages : les libelles du viewer ne
+# correspondent pas toujours (accents, suffixes sponsors, casse). Lancer
+# d'abord le scraper en --dry-run : il imprime l'inventaire exact par classe,
+# avec le slug automatique applique a chaque nom non mappe. Il suffit de
+# recopier les noms et de fixer les hull_id qui comptent.
+#
+# Le slug automatique est sur et reversible : un bateau non mappe est collecte
+# quand meme. Le mapping ne sert qu'a garder la continuite longitudinale entre
+# courses et entre campagnes (cf. hull_lineage.py dans sailrating/).
+hull_map:
+  ULTIM:
+    # Noms exacts affiches par le viewer 2025 (releves via --dry-run).
+    # Attention au lineage : le hull_id doit suivre la coque, pas le sponsor.
+    "Actual Ultim 4": actual_ultim_4
+    "Banque Populaire XI": bpxi
+    "Sodebo Ultim 3": sodebo_ultim_3
+    "Svr Lazartigue": svr_lazartigue
+    # Alias 2026 (libelles susceptibles de changer) :
+    "Maxi Banque Populaire XI": bpxi
+    "SVR-Lazartigue": svr_lazartigue
+
+  OCEAN_FIFTY:
+    # 10 engages en 2025 (noms exacts du viewer). Classe a jauge de boite
+    # (~15 m), flotte homogene : c'est elle qui permet une estimation de
+    # polaire par cohorte.
+    "Edenred": edenred
+    "Inter Invest": inter_invest
+    "Koesio": koesio
+    "Lazare": lazare
+    "Le Rire Medecin - Lamotte": le_rire_medecin_lamotte
+    "Mon Bonnet Rose": mon_bonnet_rose
+    "Solidaires En Peloton": solidaires_en_peloton
+    "Upwind By Merconcept": upwind_by_merconcept
+    "Viabilis Oceans": viabilis_oceans
+    "Wewise": wewise

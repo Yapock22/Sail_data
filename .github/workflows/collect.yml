@@ -1,0 +1,75 @@
+name: collect
+
+on:
+  schedule:
+    # Toutes les 10 minutes, uniquement du 23 au 27 septembre.
+    # Geovoile publie toutes les 15 min : 10 min garantit qu'on ne rate pas
+    # un rafraichissement meme avec le retard habituel des crons GitHub
+    # (5 a 20 min de derive sous charge). Les doublons sont filtres au stockage.
+    - cron: "*/10 * 23-27 9 *"
+  workflow_dispatch:
+    inputs:
+      race_id:
+        description: "race_id de config/races.yaml"
+        default: "24hultim2026"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: collect
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fenetre de course
+        id: window
+        run: python3 src/gate.py --race-id "${{ inputs.race_id || '24hultim2026' }}"
+
+      - uses: actions/setup-python@v5
+        if: steps.window.outputs.active == 'true'
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Dependances
+        if: steps.window.outputs.active == 'true'
+        run: |
+          pip install -r requirements.txt
+          python -m playwright install --with-deps chromium
+
+      - name: Collecte
+        if: steps.window.outputs.active == 'true'
+        working-directory: .
+        env:
+          PYTHONPATH: src
+        run: python src/geovoile_scrape.py --race-id "${{ inputs.race_id || '24hultim2026' }}"
+
+      - name: Commit
+        if: steps.window.outputs.active == 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/raw/tracks
+          if git diff --staged --quiet; then
+            echo "rien de neuf"
+            exit 0
+          fi
+          git commit -m "collecte $(date -u +%Y-%m-%dT%H:%MZ)"
+          for i in 1 2 3 4 5; do
+            git pull --rebase --autostash origin "${GITHUB_REF_NAME}" && \
+            git push origin "HEAD:${GITHUB_REF_NAME}" && exit 0
+            sleep $((i * 5))
+          done
+          exit 1
+
+      - name: Diagnostic si echec
+        if: failure()
+        run: |
+          echo "::warning::collecte en echec - verifier que viewer_url pointe bien"
+          echo "sur l'edition en cours (pattern /<annee>/viewer/ ou /<annee>/tracker/)"
